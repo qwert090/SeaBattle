@@ -1,0 +1,1 @@
+java -jar SeaBattle-1.0-SNAPSHOT.jar
