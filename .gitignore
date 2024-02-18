@@ -1,2 +1,6 @@
+!/target/SeaBattle.bat
+!/target/SeaBattle-1.0-SNAPSHOT.jar
+
 # Project exclude paths
 /target/
+.idea

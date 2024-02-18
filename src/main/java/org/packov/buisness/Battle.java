@@ -1,16 +1,21 @@
-package org.packov;
+package org.packov.buisness;
+
+import org.packov.enums.Cell;
+import org.packov.entity.Field;
+import org.packov.entity.Player;
+import org.packov.entity.Ship;
+import org.packov.utils.FieldUtil;
+import org.packov.utils.InputUtil;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Scanner;
 
 public class Battle {
 
 
     public static void pressEnter() {
-        Scanner scanner = new Scanner(System.in);
         System.out.println("Нажмите ENTER");
-        scanner.nextLine();
+        InputUtil.inString();
         for (int i = 0; i < 30; i++) {
             System.out.println();
 
@@ -19,32 +24,31 @@ public class Battle {
 
     public String attack(Field playerField, Field playerObserveField, Field enemyField, ArrayList<Ship> ships, Player player) {
         while (true) {
-            Scanner scanner = new Scanner(System.in);
-            Field.showTwoFields(playerField, playerObserveField);
-            System.out.println(player.name + " введите поле для атаки :");
-            String coordinates = scanner.next();
+            FieldUtil.showTwoFields(playerField, playerObserveField);
+            System.out.println(player.name() + " введите поле для атаки :");
+            String coordinates = InputUtil.inNotNullString();
             if (!checkRightWriting(coordinates)) {
                 System.out.println("Неправильно введены координаты поля атаки");
                 continue;
             }
             int verticalCoordinate = getVerticalCoordinate(coordinates);
             int horizontalCoordinate = getHorizontalCoordinate(coordinates);
-            if (enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 1].equals(Cell.EMPTY.value)) {
-                playerObserveField.field[horizontalCoordinate - 1][verticalCoordinate - 1] = Cell.SHOT.value;
-                enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 1] = Cell.SHOT.value;
-                Field.showTwoFields(playerField, playerObserveField);
+            if (enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 1].equals(Cell.EMPTY.value)) {
+                playerObserveField.getField()[horizontalCoordinate - 1][verticalCoordinate - 1] = Cell.SHOT.value;
+                enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 1] = Cell.SHOT.value;
+                FieldUtil.showTwoFields(playerField, playerObserveField);
                 return "Промах";
 
             } else {
-                if (enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 1].equals(Cell.SHOT.value) ||
-                        enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 1].equals(Cell.DEAD.value)) {
+                if (enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 1].equals(Cell.SHOT.value) ||
+                        enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 1].equals(Cell.DEAD.value)) {
                     System.out.println("В это поле вы уже стреляли или здесь точно не расположен корабль");
                 } else {
                     String hit = hitShip(verticalCoordinate, horizontalCoordinate, ships, enemyField, playerObserveField);
                     System.out.println(hit);
-                    Field.showTwoFields(playerField, playerObserveField);
+                    FieldUtil.showTwoFields(playerField, playerObserveField);
                     if (hit.equals("убил") && ships.isEmpty()) {
-                        return player.name + " победил";
+                        return player.name() + " победил";
                     }
                     System.out.println("Продолжайте атаковать");
                     attack(playerField, playerObserveField, enemyField, ships, player);
@@ -62,10 +66,8 @@ public class Battle {
     ) {
         System.out.println("Бот атакует");
         Random random = new Random();
-        int verticalCoordinateAttack = nextAttack[0];
-        int horizontalCoordinateAttack = nextAttack[1];
-        //nextAttack[2] - промах, атака, атака после промаха
-        //nextAttack[3] - вниз вверх
+        int verticalCoordinateAttack;
+        int horizontalCoordinateAttack;
         if (nextAttack[0] == 0) {
             nextAttack[0] = random.nextInt(15) + 1;
             nextAttack[1] = random.nextInt(15) + 1;
@@ -104,11 +106,11 @@ public class Battle {
             //первая атака
             else if (nextAttack[2] == 0) {
                 System.out.println("бот атакует поле " + (char) (horizontalCoordinateAttack + 64) + verticalCoordinateAttack);
-                if (enemyField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.EMPTY.value)) {
-                    enemyField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
-                    playerObserveField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
+                if (enemyField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.EMPTY.value)) {
+                    enemyField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
+                    playerObserveField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
                     System.out.println("в первый раз промазал");
-                    nextAttack = searchShip(playerObserveField.field, ships);
+                    nextAttack = searchShip(playerObserveField.getField(), ships);
                     return nextAttack;
                 } else {
                     System.out.println("бот атакует поле " + (char) (horizontalCoordinateAttack + 64) + verticalCoordinateAttack);
@@ -120,7 +122,7 @@ public class Battle {
                             playerObserveField);
                     if ("убил".equals(result)) {
                         System.out.println("убил с первого раза");
-                        nextAttack = searchShip(playerObserveField.field, ships);
+                        nextAttack = searchShip(playerObserveField.getField(), ships);
                         nextAttack[2] = 0;
                     } else {
                         System.out.println("попал с первого раза");
@@ -148,7 +150,7 @@ public class Battle {
                 variantOfWay = 4;
                 nextAttack[1] = verticalCoordinateAttack - 1;
             }
-            if (enemyField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.DEAD.value)) {
+            if (enemyField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.DEAD.value)) {
                 switch (variantOfWay) {
                     case (1) -> horizontalCoordinateAttack--;
                     case (2) -> horizontalCoordinateAttack++;
@@ -158,7 +160,7 @@ public class Battle {
                 }
                 nextAttack[0] = horizontalCoordinateAttack;
                 nextAttack[1] = verticalCoordinateAttack;
-            } else if (enemyField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.SHOT.value))
+            } else if (enemyField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.SHOT.value))
                 switch (variantOfWay) {
                     case (1) -> {
                         nextAttack[3] = 2;
@@ -177,9 +179,9 @@ public class Battle {
                         nextAttack[1] = verticalCoordinateAttack + 1;
                     }
                 }
-            else if (enemyField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.EMPTY.value)) {
-                playerObserveField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
-                enemyField.field[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
+            else if (enemyField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1].equals(Cell.EMPTY.value)) {
+                playerObserveField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
+                enemyField.getField()[horizontalCoordinateAttack - 1][verticalCoordinateAttack - 1] = Cell.SHOT.value;
                 System.out.println("промазал при добивании");
                 switch (variantOfWay) {
                     case (1) -> {
@@ -208,7 +210,7 @@ public class Battle {
                     System.out.println("попал при добивании");
                 } else {
                     System.out.println("убил при добивании");
-                    nextAttack = searchShip(playerObserveField.field, ships);
+                    nextAttack = searchShip(playerObserveField.getField(), ships);
                     nextAttack[2] = 0;
                     nextAttack[3] = 0;
                     return nextAttack;
@@ -232,20 +234,20 @@ public class Battle {
         //сверху
         if (variant != 1 && variant != 5 && variant != 6) {
             System.out.println("бот атакует поле " + (char) (horizontalCoordinate - 1 + 64) + verticalCoordinate);
-            if (enemyField.field[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.EMPTY.value)) {
-                playerObserveField.field[horizontalCoordinate - 2][verticalCoordinate - 1] = Cell.SHOT.value;
-                enemyField.field[horizontalCoordinate - 2][verticalCoordinate - 1] = Cell.SHOT.value;
+            if (enemyField.getField()[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.EMPTY.value)) {
+                playerObserveField.getField()[horizontalCoordinate - 2][verticalCoordinate - 1] = Cell.SHOT.value;
+                enemyField.getField()[horizontalCoordinate - 2][verticalCoordinate - 1] = Cell.SHOT.value;
                 System.out.println("промазал при поиске");
                 return new int[]{horizontalCoordinate, verticalCoordinate, 2, 0};
-            } else if (!(enemyField.field[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.SHOT.value) ||
-                    enemyField.field[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.DEAD.value) ||
-                    enemyField.field[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.EMPTY.value))) {
+            } else if (!(enemyField.getField()[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.SHOT.value) ||
+                    enemyField.getField()[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.DEAD.value) ||
+                    enemyField.getField()[horizontalCoordinate - 2][verticalCoordinate - 1].equals(Cell.EMPTY.value))) {
                 String hit = hitShip(verticalCoordinate, horizontalCoordinate - 1, ships,
                         enemyField, playerObserveField);
                 System.out.println(hit);
                 if (hit.equals("убил")) {
                     System.out.println("убил при поиске");
-                    int[] nextAttack = searchShip(playerObserveField.field, ships);
+                    int[] nextAttack = searchShip(playerObserveField.getField(), ships);
                     nextAttack[2] = 0;
                     return nextAttack;
                 } else {
@@ -257,20 +259,20 @@ public class Battle {
         //снизу
         if (variant != 4 && variant != 7 && variant != 8) {
             System.out.println("бот атакует поле " + (char) (horizontalCoordinate + 1 + 64) + verticalCoordinate);
-            if (enemyField.field[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.EMPTY.value)) {
-                playerObserveField.field[horizontalCoordinate][verticalCoordinate - 1] = Cell.SHOT.value;
-                enemyField.field[horizontalCoordinate][verticalCoordinate - 1] = Cell.SHOT.value;
+            if (enemyField.getField()[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.EMPTY.value)) {
+                playerObserveField.getField()[horizontalCoordinate][verticalCoordinate - 1] = Cell.SHOT.value;
+                enemyField.getField()[horizontalCoordinate][verticalCoordinate - 1] = Cell.SHOT.value;
                 System.out.println("промазал при поиске");
                 return new int[]{horizontalCoordinate, verticalCoordinate, 2, 0};
-            } else if (!(enemyField.field[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.SHOT.value) ||
-                    enemyField.field[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.DEAD.value) ||
-                    enemyField.field[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.EMPTY.value))) {
+            } else if (!(enemyField.getField()[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.SHOT.value) ||
+                    enemyField.getField()[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.DEAD.value) ||
+                    enemyField.getField()[horizontalCoordinate][verticalCoordinate - 1].equals(Cell.EMPTY.value))) {
                 String hit = hitShip(verticalCoordinate, horizontalCoordinate + 1, ships,
                         enemyField, playerObserveField);
                 System.out.println(hit);
                 if (hit.equals("убил")) {
                     System.out.println("убил при поиске");
-                    int[] nextAttack = searchShip(playerObserveField.field, ships);
+                    int[] nextAttack = searchShip(playerObserveField.getField(), ships);
                     nextAttack[2] = 0;
                     return nextAttack;
                 } else {
@@ -282,14 +284,14 @@ public class Battle {
         //справа
         if (variant != 2 && variant != 5 && variant != 7) {
             System.out.println("бот атакует поле " + (char) (horizontalCoordinate + 64) + (verticalCoordinate + 1));
-            if (enemyField.field[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.EMPTY.value)) {
-                playerObserveField.field[horizontalCoordinate - 1][verticalCoordinate] = Cell.SHOT.value;
-                enemyField.field[horizontalCoordinate - 1][verticalCoordinate] = Cell.SHOT.value;
+            if (enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.EMPTY.value)) {
+                playerObserveField.getField()[horizontalCoordinate - 1][verticalCoordinate] = Cell.SHOT.value;
+                enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate] = Cell.SHOT.value;
                 System.out.println("промазал при поиске");
                 return new int[]{horizontalCoordinate, verticalCoordinate, 2, 0};
-            } else if (!(enemyField.field[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.SHOT.value) ||
-                    enemyField.field[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.DEAD.value) ||
-                    enemyField.field[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.EMPTY.value))) {
+            } else if (!(enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.SHOT.value) ||
+                    enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.DEAD.value) ||
+                    enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate].equals(Cell.EMPTY.value))) {
                 String hit = hitShip(
                         verticalCoordinate + 1,
                         horizontalCoordinate,
@@ -300,7 +302,7 @@ public class Battle {
                 System.out.println(hit);
                 if (hit.equals("убил")) {
                     System.out.println("убил при поиске");
-                    int[] nextAttack = searchShip(playerObserveField.field, ships);
+                    int[] nextAttack = searchShip(playerObserveField.getField(), ships);
                     nextAttack[2] = 0;
                     return nextAttack;
                 } else {
@@ -312,14 +314,14 @@ public class Battle {
         //слева
         if (variant != 3 && variant != 6 && variant != 8) {
             System.out.println("бот атакует поле " + (char) (horizontalCoordinate + 64) + (verticalCoordinate - 1));
-            if (enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.EMPTY.value)) {
-                playerObserveField.field[horizontalCoordinate - 1][verticalCoordinate - 2] = Cell.SHOT.value;
-                enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 2] = Cell.SHOT.value;
+            if (enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.EMPTY.value)) {
+                playerObserveField.getField()[horizontalCoordinate - 1][verticalCoordinate - 2] = Cell.SHOT.value;
+                enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 2] = Cell.SHOT.value;
                 System.out.println("промазал при поиске");
                 return new int[]{horizontalCoordinate, verticalCoordinate, 2, 0};
-            } else if (!(enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.SHOT.value) ||
-                    enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.DEAD.value) ||
-                    enemyField.field[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.EMPTY.value))) {
+            } else if (!(enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.SHOT.value) ||
+                    enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.DEAD.value) ||
+                    enemyField.getField()[horizontalCoordinate - 1][verticalCoordinate - 2].equals(Cell.EMPTY.value))) {
                 String hit = hitShip(
                         verticalCoordinate - 1,
                         horizontalCoordinate,
@@ -329,7 +331,7 @@ public class Battle {
                 );
                 if (hit.equals("убил")) {
                     System.out.println("убил при поиске");
-                    int[] nextAttack = searchShip(playerObserveField.field, ships);
+                    int[] nextAttack = searchShip(playerObserveField.getField(), ships);
                     nextAttack[2] = 0;
                     return nextAttack;
                 } else {
@@ -346,8 +348,8 @@ public class Battle {
     public int[] searchShip(String[][] playerObserveField, ArrayList<Ship> ships) {
         int number = 0;
         for (Ship ship : ships) {
-            if (ship.numberOfDeck > number) {
-                number = ship.numberOfDeck;
+            if (ship.getNumberOfDeck() > number) {
+                number = ship.getNumberOfDeck();
             }
         }
         int horizontalCoordinate1 = 1;
@@ -405,14 +407,14 @@ public class Battle {
             Field playerObserveField
     ) {
         for (Ship ship : ships) {
-            if (ship.horizontalCoordinate1 <= horizontalCoordinateAttac &&
-                    ship.horizontalCoordinate2 >= horizontalCoordinateAttac &&
-                    ship.verticalCoordinate1 <= verticalCoordinateAttac &&
-                    ship.verticalCoordinate2 >= verticalCoordinateAttac) {
-                enemyField.field[horizontalCoordinateAttac - 1][verticalCoordinateAttac - 1] = Cell.DEAD.value;
-                playerObserveField.field[horizontalCoordinateAttac - 1][verticalCoordinateAttac - 1] = Cell.DEAD.value;
-                ship.hp--;
-                if (ship.hp == 0) {
+            if (ship.getCoordinateOne().getY() <= horizontalCoordinateAttac &&
+                    ship.getCoordinateTwo().getY() >= horizontalCoordinateAttac &&
+                    ship.getCoordinateOne().getX() <= verticalCoordinateAttac &&
+                    ship.getCoordinateTwo().getX() >= verticalCoordinateAttac) {
+                enemyField.getField()[horizontalCoordinateAttac - 1][verticalCoordinateAttac - 1] = Cell.DEAD.value;
+                playerObserveField.getField()[horizontalCoordinateAttac - 1][verticalCoordinateAttac - 1] = Cell.DEAD.value;
+                ship.setHp(ship.getHp() - 1);
+                if (ship.getHp() == 0) {
                     int variant = bordresWithField(horizontalCoordinateAttac, verticalCoordinateAttac);
                     killShip(ship, variant, enemyField);
                     killShip(ship, variant, playerObserveField);
@@ -423,9 +425,7 @@ public class Battle {
             }
 
         }
-        return "ошибка3";
-
-
+        return "ошибка3"; //СОЗДАТЬ КЛАСС СТРОК-КОНСТАНТ
     }
 
     public void killShip(Ship ship, int variant, Field field) {
@@ -433,76 +433,76 @@ public class Battle {
             for (int j = 0; j < 16; j++) {
                 switch (variant) {
                     case (0):
-                        if (i >= (ship.horizontalCoordinate1 - 2) && i <= (ship.horizontalCoordinate2) &&
-                                j >= (ship.verticalCoordinate1 - 2) && j <= (ship.verticalCoordinate2)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 2) && i <= (ship.getCoordinateTwo().getY()) &&
+                                j >= (ship.getCoordinateOne().getX() - 2) && j <= (ship.getCoordinateTwo().getX())) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (1):
-                        if (i >= (ship.horizontalCoordinate1 - 2) && i <= (ship.horizontalCoordinate2) &&
-                                j >= (ship.verticalCoordinate1 - 1) && j <= (ship.verticalCoordinate2)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 2) && i <= (ship.getCoordinateTwo().getY()) &&
+                                j >= (ship.getCoordinateOne().getX() - 1) && j <= (ship.getCoordinateTwo().getX())) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (2):
-                        if (i >= (ship.horizontalCoordinate1 - 1) && i <= (ship.horizontalCoordinate2) &&
-                                j >= (ship.verticalCoordinate1 - 2) && j <= (ship.verticalCoordinate2)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 1) && i <= (ship.getCoordinateTwo().getY()) &&
+                                j >= (ship.getCoordinateOne().getX() - 2) && j <= (ship.getCoordinateTwo().getX())) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (3):
-                        if (i >= (ship.horizontalCoordinate1 - 2) && i <= (ship.horizontalCoordinate2 - 1) &&
-                                j >= (ship.verticalCoordinate1 - 2) && j <= (ship.verticalCoordinate2)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 2) && i <= (ship.getCoordinateTwo().getY() - 1) &&
+                                j >= (ship.getCoordinateOne().getX() - 2) && j <= (ship.getCoordinateTwo().getX())) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (4):
-                        if (i >= (ship.horizontalCoordinate1 - 2) && i <= (ship.horizontalCoordinate2) &&
-                                j >= (ship.verticalCoordinate1 - 2) && j <= (ship.verticalCoordinate2 - 1)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 2) && i <= (ship.getCoordinateTwo().getY()) &&
+                                j >= (ship.getCoordinateOne().getX() - 2) && j <= (ship.getCoordinateTwo().getX() - 1)) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (5):
-                        if (i >= (ship.horizontalCoordinate1 - 1) && i <= (ship.horizontalCoordinate2) &&
-                                j >= (ship.verticalCoordinate1 - 1) && j <= (ship.verticalCoordinate2)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 1) && i <= (ship.getCoordinateTwo().getY()) &&
+                                j >= (ship.getCoordinateOne().getX() - 1) && j <= (ship.getCoordinateTwo().getX())) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (6):
-                        if (i >= (ship.horizontalCoordinate1 - 1) && i <= (ship.horizontalCoordinate2) &&
-                                j >= (ship.verticalCoordinate1 - 2) && j <= (ship.verticalCoordinate2 - 1)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 1) && i <= (ship.getCoordinateTwo().getY()) &&
+                                j >= (ship.getCoordinateOne().getX() - 2) && j <= (ship.getCoordinateTwo().getX() - 1)) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (7):
-                        if (i >= (ship.horizontalCoordinate1 - 2) && i <= (ship.horizontalCoordinate2 - 1) &&
-                                j >= (ship.verticalCoordinate1 - 1) && j <= (ship.verticalCoordinate2)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 2) && i <= (ship.getCoordinateTwo().getY() - 1) &&
+                                j >= (ship.getCoordinateOne().getX() - 1) && j <= (ship.getCoordinateTwo().getX())) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
                     case (8):
-                        if (i >= (ship.horizontalCoordinate1 - 2) && i <= (ship.horizontalCoordinate2 - 1) &&
-                                j >= (ship.verticalCoordinate1 - 2) && j <= (ship.verticalCoordinate2 - 1)) {
-                            if (i >= ship.horizontalCoordinate1 - 1 && i <= ship.horizontalCoordinate2 - 1 &&
-                                    j >= ship.verticalCoordinate1 - 1 && j <= ship.verticalCoordinate2 - 1) {
-                                field.field[i][j] = Cell.DEAD.value;
-                            } else field.field[i][j] = Cell.SHOT.value;
+                        if (i >= (ship.getCoordinateOne().getY() - 2) && i <= (ship.getCoordinateTwo().getY() - 1) &&
+                                j >= (ship.getCoordinateOne().getX() - 2) && j <= (ship.getCoordinateTwo().getX() - 1)) {
+                            if (i >= ship.getCoordinateOne().getY() - 1 && i <= ship.getCoordinateTwo().getY() - 1 &&
+                                    j >= ship.getCoordinateOne().getX() - 1 && j <= ship.getCoordinateTwo().getX() - 1) {
+                                field.getField()[i][j] = Cell.DEAD.value;
+                            } else field.getField()[i][j] = Cell.SHOT.value;
                         }
 
                 }
